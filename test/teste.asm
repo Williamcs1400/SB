@@ -1,5 +1,5 @@
-L1:          EQU           1 
-L2:            EQU          0 
+L1: EQU 1 
+L2: EQU 0 
 SECAO TEXTO 
 IF L1 
 LOAD SPACE ;faz esta operação se L1 for verdadeiro 

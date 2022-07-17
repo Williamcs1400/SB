@@ -6,6 +6,8 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <fstream>
+
 
 using namespace std;
 
@@ -71,39 +73,49 @@ vector<string> preProcessamento(vector<string> linhas){
 
         // a linha contem EQU
         if(linha.find("EQU") != string::npos) {
+            // remover espacos
             linha.erase(remove(linha.begin(), linha.end(), ' '), linha.end());
 
             string label = linha.substr(0, linha.find("EQU") - 1);
             string valor = linha.substr(linha.find("EQU") + 3);
             
-            cout << "label: " << label << " valor: " << valor << endl;
             EQUS[label] = stoi(valor);
         }
     }
-
+    
     for(int i = 0; i < linhas.size(); i++) {
         // passando pra UPPERCASE
         string linha = linhas[i];
         for (auto & c: linha) c = toupper(c);
-
         // a linha contem IF
         if(linha.find("IF") != string::npos) {
+            // remover espacos
             linha.erase(remove(linha.begin(), linha.end(), ' '), linha.end());
 
             string label = linha.substr(linha.find("IF") + 2);
-            if(EQUS[label] == 0) {
-                linhas[i] = "";
-                linhas[i+1] = "";
-                i += 2;
+            auto it = remove_if(label.begin(), label.end(), [](char const &c) {
+                return !isalnum(c);
+            });
+
+            label.erase(it, label.end());
+            // se o if for "true" pula da linha do if
+            if(EQUS[label] == 1) {
+                linha = "";
             }
-            
+
+            // se o if for "false" pula da linha do if e a subsequente
+            if(EQUS[label] == 0){
+                linha = "";
+                linhas[i+1] = "";
+            }
         }
 
+        if(linha.find(";") != string::npos) {
+            linha = linha.substr(0, linha.find(";"));
+        }
         resultado.push_back(linha);
     }
-
     return resultado;
-
 }
 
 bool verificarSessoes(vector<string> linhas){
@@ -123,24 +135,25 @@ bool verificarSessoes(vector<string> linhas){
 
 int main(int argc, char *argv[]){
     
+    // iniciar maps 
     inicializar();
 
     // Le arquivo de instrucoes linha por linha
     vector<string> entrada = lerArquivo("test/teste.asm");
 
-    
     // pre processamento
     if(string(argv[1]) == "-p") {
-        cout << "Pre processamento: " << endl;
         vector<string> entrada_processada = preProcessamento(entrada);
-        for(string linha: entrada_processada) {
-            cout << linha << endl;
+        ofstream output_file("preprocessado.txt");
+        for(const auto & line: entrada_processada) {
+            output_file << line << endl;
         }
+
+        // cout << "Pre processamento: " << endl;
+        // for(string linha: entrada_processada) {
+        //     cout << linha << endl;
+        // }
     }
-    
-    // Verifica se o arquivo contem as sessoes corretas
-    // bool test = verificarSessoes(entrada);
-    // cout << test << endl;
 
 
     return 0;
