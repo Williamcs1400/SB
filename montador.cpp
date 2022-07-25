@@ -6,6 +6,8 @@
 #include <vector>
 #include <algorithm>
 #include <sstream>
+#include <fstream>
+
 
 using namespace std;
 
@@ -53,9 +55,7 @@ vector<string> ler_arquivo(string caminho){
     vector<string> lines;
     ifstream file(caminho);
     string line;
-    while(getline(file, line)){
-        lines.push_back(line);
-    }
+    while(getline(file, line)) lines.push_back(line);
     return lines;
 }
 
@@ -65,10 +65,7 @@ vector<string> split_string(string str) {
     string token;
     stringstream ss(str);
 
-    while(ss >> token){
-        resultado.push_back(token);
-    }
-
+    while(ss >> token) resultado.push_back(token);
     return resultado;
 }
 
@@ -161,7 +158,6 @@ vector<string> pre_processamento(vector<string> linhas){
 
         }
         // antes da secao texto,  nao precisamos salvar as linhas
-
 
         if(secao_texto_encontrado && !ignorar_atual) {
             ignorar_atual = false;
