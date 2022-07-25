@@ -36,7 +36,7 @@ void inicializar() {
     INSTRUCOES["OUTPUT"] = make_pair(13, 2);
     INSTRUCOES["STOP"] = make_pair(14, 1);
 
-    //tabela de diretivas
+    // tabela de diretivas
     DIRETIVAS["SPACE"] = 1; 
     DIRETIVAS["CONST"] = 1; 
     DIRETIVAS["BEGIN"] = 0;
@@ -49,7 +49,7 @@ void inicializar() {
 }
 
 // recebe o caminho do arquivo e retorna um vetor com cada linha do arquivo por posicao
-vector<string> lerArquivo(string caminho){
+vector<string> ler_arquivo(string caminho){
     vector<string> lines;
     ifstream file(caminho);
     string line;
@@ -59,54 +59,122 @@ vector<string> lerArquivo(string caminho){
     return lines;
 }
 
-// faz preprocessamento do arquivo -> diretivas EQU e IF e remove comentarios
-vector<string> preProcessamento(vector<string> linhas){
-
+vector<string> split_string(string str) {
     vector<string> resultado;
+    
+    string token;
+    stringstream ss(str);
 
-    // salva a label e valor na tabela de sinonimos
-    for(string linha: linhas) {
-        // passando pra UPPERCASE
-        for (auto & c: linha) c = toupper(c);
-
-        // a linha contem EQU
-        if(linha.find("EQU") != string::npos) {
-            linha.erase(remove(linha.begin(), linha.end(), ' '), linha.end());
-
-            string label = linha.substr(0, linha.find("EQU") - 1);
-            string valor = linha.substr(linha.find("EQU") + 3);
-            
-            cout << "label: " << label << " valor: " << valor << endl;
-            EQUS[label] = stoi(valor);
-        }
-    }
-
-    for(int i = 0; i < linhas.size(); i++) {
-        // passando pra UPPERCASE
-        string linha = linhas[i];
-        for (auto & c: linha) c = toupper(c);
-
-        // a linha contem IF
-        if(linha.find("IF") != string::npos) {
-            linha.erase(remove(linha.begin(), linha.end(), ' '), linha.end());
-
-            string label = linha.substr(linha.find("IF") + 2);
-            if(EQUS[label] == 0) {
-                linhas[i] = "";
-                linhas[i+1] = "";
-                i += 2;
-            }
-            
-        }
-
-        resultado.push_back(linha);
+    while(ss >> token){
+        resultado.push_back(token);
     }
 
     return resultado;
-
 }
 
-bool verificarSessoes(vector<string> linhas){
+// faz preprocessamento do arquivo -> diretivas EQU e IF e remove comentarios
+vector<string> pre_processamento(vector<string> linhas){
+    vector<string> resultado;
+
+    string ultima_label = "";
+    
+    // foi encontrado um equ que ainda espera por argumentos
+    bool equ_encontrado = false;
+
+    // foi encontrado um if que ainda espera por argumentos
+    bool if_encontrado = false;
+
+    // ignorar proxima linha
+    bool ignorar_prox = false;
+    // ignorar linha atual
+    bool ignorar_atual = false;
+    
+    bool secao_texto_encontrado = false;
+
+    for(string linha: linhas) {
+        
+        // ha um comentario, entao removemos da string
+        if(linha.find(";") != string::npos) {
+            linha = linha.substr(0, linha.find(";"));
+        }
+
+        // se devemos ignorar, pulamos esssa linha
+        if(ignorar_prox) {
+            ultima_label = "";
+            equ_encontrado = false;
+            if_encontrado = false;
+            ignorar_prox = false;
+            ignorar_atual = false;
+            continue;
+        }
+
+        // passando pra UPPERCASE
+        for (auto & c: linha) c = toupper(c);
+
+        // tokenizando a linha
+        vector<string> tokens = split_string(linha);
+        
+        if(linha.find("SECAO TEXTO") != string::npos) secao_texto_encontrado = true;
+
+        for (auto token: tokens) {
+            // encontramos uma label, e salvamos retirando o :
+            if(token.find(":") != string::npos) ultima_label = token.substr(0, token.size() - 1);
+            
+            else if(token == "EQU") {
+                //se encontramos um equ apos uma label, essa declaracao eh valida
+                if(ultima_label != "") equ_encontrado = true;
+                else ultima_label = "";
+            }
+            else if(equ_encontrado) {
+                EQUS[ultima_label] = stoi(token);
+                equ_encontrado = false;
+                ultima_label = "";
+            }
+            
+            else if(token == "IF") {
+                if_encontrado = true;
+                ignorar_atual = true;
+            } 
+            //o token anterior eh um if
+            else if (if_encontrado) {
+                // verificamos se ha um EQU anterior, com a label usada pelo if
+                if(EQUS.count(token)) {
+                    if_encontrado = false;
+                    // o token if e o token posterior devem ser removidos do codigo final (if l1)
+                    if(EQUS[token] <= 0) {
+                        ignorar_prox = true;
+                    }
+                }
+                else {
+                    cout << linha << endl;
+                    cout << "Erro - IF usado sem EQU anterior" << endl;
+                }
+            }
+           
+           // se o token nao eh uma label, nem equ nem if, resetamos as variaveis de estado
+            else {
+                ultima_label = "";
+                equ_encontrado = false;
+                if_encontrado = false;
+                ignorar_atual = false;
+            }
+
+        }
+        // antes da secao texto,  nao precisamos salvar as linhas
+
+
+        if(secao_texto_encontrado && !ignorar_atual) {
+            ignorar_atual = false;
+            resultado.push_back(linha);
+        }
+        
+    }
+    return resultado;
+}
+
+/*
+
+bool verificar_sessoes(vector<string> linhas){
 
     if(!(find(linhas.begin(), linhas.end(), "SECAO TEXTO") == linhas.end())){
         cout << "Erro: nao contem SESSAO TEXTO" << endl;
@@ -121,27 +189,22 @@ bool verificarSessoes(vector<string> linhas){
     return true;
 }
 
+*/
+
 int main(int argc, char *argv[]){
-    
     inicializar();
+    vector<string> entrada = ler_arquivo("test/teste.asm");
 
-    // Le arquivo de instrucoes linha por linha
-    vector<string> entrada = lerArquivo("test/teste.asm");
-
-    
     // pre processamento
     if(string(argv[1]) == "-p") {
-        cout << "Pre processamento: " << endl;
-        vector<string> entrada_processada = preProcessamento(entrada);
-        for(string linha: entrada_processada) {
-            cout << linha << endl;
-        }
+        vector<string> entrada_processada = pre_processamento(entrada);
+        cout << "apos processamento" << endl;
+        for (auto a: entrada_processada) cout << a << endl;
+    }
+
+    else if(1){
+        cout << endl;
     }
     
-    // Verifica se o arquivo contem as sessoes corretas
-    // bool test = verificarSessoes(entrada);
-    // cout << test << endl;
-
-
     return 0;
 }
