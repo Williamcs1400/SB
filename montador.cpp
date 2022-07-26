@@ -188,16 +188,29 @@ bool verificar_sessoes(vector<string> linhas){
 */
 
 int main(int argc, char *argv[]){
-    inicializar();
-    vector<string> entrada = ler_arquivo("test/teste.asm");
 
-    // pre processamento
-    if(argc > 1 && string(argv[1]) == "-p") {
-        vector<string> entrada_processada = pre_processamento(entrada);
-        ofstream arquivo;
-        arquivo.open("test/teste_p.asm");
-        for(string linha: entrada_processada) arquivo << linha << endl;
-        arquivo.close();
+    if(argc < 4) {
+        cout << "Erro: Faltam argumentos" << endl;
+        return 0;
+    }
+
+    else {
+        string modo_execucao(argv[1]), arquivo_entrada(argv[2]), arquivo_saida(argv[3]);
+
+        inicializar();
+        vector<string> entrada = ler_arquivo(arquivo_entrada);
+
+        // pre processamento
+        if(modo_execucao == "-p") {
+            vector<string> entrada_processada = pre_processamento(entrada);
+
+            ofstream arquivo;
+            arquivo.open(arquivo_saida);
+            for(auto linha: entrada_processada) arquivo << linha << endl;
+            
+            arquivo.close();
+        }
+
     }
     
     return 0;
