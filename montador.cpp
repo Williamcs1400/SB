@@ -8,11 +8,10 @@
 #include <sstream>
 #include <fstream>
 
-
 using namespace std;
 
 // instrucao -> (opcode, tamanho)
-map<string, pair<int, int>> INSTRUCOES;
+map<string, pair<int, int> > INSTRUCOES;
 
 // diretiva -> (tamanho)
 map<string, int> DIRETIVAS;
@@ -106,14 +105,14 @@ vector<string> pre_processamento(vector<string> linhas){
         }
 
         // passando pra UPPERCASE
-        for (auto & c: linha) c = toupper(c);
+        transform(linha.begin(), linha.end(), linha.begin(), ::toupper);
 
         // tokenizando a linha
         vector<string> tokens = split_string(linha);
         
         if(linha.find("SECAO TEXTO") != string::npos) secao_texto_encontrado = true;
 
-        for (auto token: tokens) {
+        for (string token: tokens) {
             // encontramos uma label, e salvamos retirando o :
             if(token.find(":") != string::npos) ultima_label = token.substr(0, token.size() - 1);
             
@@ -154,6 +153,7 @@ vector<string> pre_processamento(vector<string> linhas){
                 equ_encontrado = false;
                 if_encontrado = false;
                 ignorar_atual = false;
+                if(EQUS.count(token)) linha.replace(linha.find(token), token.size(), to_string(EQUS[token]));
             }
 
         }
@@ -192,14 +192,12 @@ int main(int argc, char *argv[]){
     vector<string> entrada = ler_arquivo("test/teste.asm");
 
     // pre processamento
-    if(string(argv[1]) == "-p") {
+    if(argc > 1 && string(argv[1]) == "-p") {
         vector<string> entrada_processada = pre_processamento(entrada);
-        cout << "apos processamento" << endl;
-        for (auto a: entrada_processada) cout << a << endl;
-    }
-
-    else if(1){
-        cout << endl;
+        ofstream arquivo;
+        arquivo.open("test/teste_p.asm");
+        for(string linha: entrada_processada) arquivo << linha << endl;
+        arquivo.close();
     }
     
     return 0;
