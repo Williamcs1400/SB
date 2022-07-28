@@ -48,7 +48,6 @@ void inicializar() {
     DIRETIVAS["PUBLIC"] = 0;
     DIRETIVAS["EQU"] = 0;
     DIRETIVAS["IF"] = 0;
-
 }
 
 // recebe o caminho do arquivo e retorna um vetor com cada linha do arquivo por posicao
@@ -240,11 +239,8 @@ void primeira_passagem (vector<string> linhas) {
             else {
                 cout << "Erro semântico - Label/Operação não identificada" << endl;
             }
-
         }
-
     }
-
 }
 
 
@@ -283,15 +279,11 @@ vector<string> segunda_passagem (vector<string> linhas) {
                 
             }
         }
-
     }
-
     return resultado;
-    
 }
 
 int main(int argc, char *argv[]){
-
     if(argc < 4) {
         cout << "Erro: Faltam argumentos" << endl;
         return 0;
