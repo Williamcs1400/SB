@@ -1,8 +1,9 @@
-ENTRADA=test/teste.asm
-SAIDA=test/saida.asm
+ENTRADA=test/teste_p.asm
+SAIDA=test/teste_obj.asm
+MODO=-o
 
 main:
 	g++ -std=c++11 -Wall montador.cpp -o montador
 
 run:
-	./montador -p $(ENTRADA) $(SAIDA)
+	./montador $(MODO) $(ENTRADA) $(SAIDA)

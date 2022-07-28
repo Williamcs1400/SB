@@ -19,6 +19,8 @@ map<string, int> DIRETIVAS;
 // tabela de sinonimos EQUs
 map<string, int> EQUS;
 
+map<string, int> TABELA_SIMBOLOS;
+
 // inicializa as tabelas
 void inicializar() {
     // tabela de instrucoes
@@ -143,7 +145,7 @@ vector<string> pre_processamento(vector<string> linhas){
                 }
                 else {
                     cout << linha << endl;
-                    cout << "Erro - IF usado sem EQU anterior" << endl;
+                    cout << "Erro semântico - IF usado sem EQU anterior" << endl;
                 }
             }
            
@@ -187,6 +189,68 @@ bool verificar_sessoes(vector<string> linhas){
 
 */
 
+int posicao;
+void primeira_passagem (vector<string> linhas) {
+
+    bool secao_texto_encontrada = false;
+    int tokens_a_pular = 0;
+    posicao = 0;
+
+    for(string linha: linhas) {
+
+        if(linha.find("SECAO TEXTO") != string::npos) secao_texto_encontrada = true;
+
+        for(string token: split_string(linha)) {
+            
+            if(tokens_a_pular) {
+                tokens_a_pular--;
+                continue;
+            }
+
+            // encontramos uma label
+            if(token.find(":") != string::npos) {
+                string label = token.substr(0, token.size()-1);
+
+                // label já existe
+                if(TABELA_SIMBOLOS.count(label)) {
+                    cout << "Erro semântico - Label redefinida" << endl;
+                }
+                else {
+                    TABELA_SIMBOLOS[label] = posicao;
+                    cout << label << " " << posicao << endl;
+                }
+            }
+
+            // encontramos uma instrucao
+            else if(INSTRUCOES.count(token)) {
+                posicao += INSTRUCOES[token].second;
+                tokens_a_pular = INSTRUCOES[token].second - 1;
+            }
+
+            // encontramos uma diretiva
+            else if(DIRETIVAS.count(token)) {
+                // se for space ou const, a posicao é
+                if(token == "SPACE" || token == "CONST") {
+                    posicao += DIRETIVAS[token];
+                    
+                    // se for CONST precisamos pular o proximo token (argumento)
+                    if(token == "CONST") {
+                        tokens_a_pular = 1;
+                    }
+                }
+            }
+
+            // se não é diretiva nem instrução
+            else {
+                cout << "Erro semântico - Label/Operação não identificada" << endl;
+            }
+
+        }
+
+    }
+
+}
+
 int main(int argc, char *argv[]){
 
     if(argc < 4) {
@@ -209,6 +273,13 @@ int main(int argc, char *argv[]){
             for(auto linha: entrada_processada) arquivo << linha << endl;
             
             arquivo.close();
+        }
+
+        else if (modo_execucao == "-o") {
+
+            primeira_passagem(entrada);
+
+
         }
 
     }
