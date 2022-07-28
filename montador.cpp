@@ -191,14 +191,10 @@ bool verificar_sessoes(vector<string> linhas){
 
 int posicao;
 void primeira_passagem (vector<string> linhas) {
-
-    bool secao_texto_encontrada = false;
-    int tokens_a_pular = 0;
     posicao = 0;
+    int tokens_a_pular = 0;
 
     for(string linha: linhas) {
-
-        if(linha.find("SECAO TEXTO") != string::npos) secao_texto_encontrada = true;
 
         for(string token: split_string(linha)) {
             
@@ -251,6 +247,49 @@ void primeira_passagem (vector<string> linhas) {
 
 }
 
+
+// retorna true se str contem parte
+bool contains (string str, string parte) {
+    if(str.find(parte) != string::npos) return true;
+    return false;
+}
+
+vector<string> segunda_passgem (vector<string> linhas) {
+    vector<string> resultado;
+    posicao = 0;
+
+    bool secao_texto_encontrada = false;
+    bool secao_dados_encontrada = false;
+
+    int argumentos_esperados = 0;
+
+    for(string linha: linhas) {
+
+        if(contains(linha, "SECAO TEXTO")) secao_texto_encontrada = true;
+        if(contains(linha, "SECAO DADOS")) secao_dados_encontrada = true;
+
+        for(string token: split_string(linha)) {
+
+            // se for uma label, nao fazemos nada
+            if(contains(token, ":")) continue;
+
+            // se for uma instrucao
+            else if(INSTRUCOES.count(token)) {
+
+            }
+            
+            // se for uma diretiva
+            else if(DIRETIVAS.count(token)) {
+                
+            }
+        }
+
+    }
+
+    return resultado;
+    
+}
+
 int main(int argc, char *argv[]){
 
     if(argc < 4) {
@@ -278,8 +317,8 @@ int main(int argc, char *argv[]){
         else if (modo_execucao == "-o") {
 
             primeira_passagem(entrada);
-
-
+            vector<string> codigo_objeto = segunda_passagem(entrada);
+            cout << "FIM" << endl;
         }
 
     }
