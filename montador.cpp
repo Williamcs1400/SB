@@ -254,7 +254,7 @@ bool contains (string str, string parte) {
     return false;
 }
 
-vector<string> segunda_passgem (vector<string> linhas) {
+vector<string> segunda_passagem (vector<string> linhas) {
     vector<string> resultado;
     posicao = 0;
 
