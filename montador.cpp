@@ -259,6 +259,12 @@ vector<string> segunda_passagem (vector<string> linhas) {
 
     int argumentos_esperados = 0;
 
+    // o ulimo token foi uma diretiva const
+    bool ultimo_const = false;
+
+    // o ultimo token foi um copy (usamos para remover a virgula do argumento)
+    bool ultimo_copy = false;
+
     for(string linha: linhas) {
 
         if(contains(linha, "SECAO TEXTO")) secao_texto_encontrada = true;
@@ -269,15 +275,57 @@ vector<string> segunda_passagem (vector<string> linhas) {
             // se for uma label, nao fazemos nada
             if(contains(token, ":")) continue;
 
+            // se for o argumento de uma instrução/diretiva
+            if(argumentos_esperados) {
+                
+                if(ultimo_const) {
+                    resultado.push_back(token);
+                    ultimo_const = false;
+                }
+
+                else {
+                    
+                    // se o ultimo foi um copy, precisamos remover a virgula do argumento atual
+                    if(ultimo_copy) {
+                        ultimo_copy = false;
+                        token = token.substr(0, token.size() - 1);
+                    }
+
+                    // o argumento é um símobolo conhecido
+                    if(TABELA_SIMBOLOS.count(token)) resultado.push_back(to_string(TABELA_SIMBOLOS[token]));
+
+                    // o argumento é desconhecido, então erro
+                    else cout << "Erro" << endl;
+                }
+                // argumentos são labels ou números
+                argumentos_esperados--;
+            }
+
             // se for uma instrucao
             else if(INSTRUCOES.count(token)) {
 
+                if(token == "COPY") {
+                    ultimo_copy = true;
+                }
+
+                posicao+=INSTRUCOES[token].second;
+                argumentos_esperados = INSTRUCOES[token].second - 1;
+                resultado.push_back(to_string(INSTRUCOES[token].first));
             }
             
             // se for uma diretiva
             else if(DIRETIVAS.count(token)) {
-                
+                posicao+=DIRETIVAS[token];
+
+                if(token == "CONST") {
+                    ultimo_const = true;
+                    argumentos_esperados = 1;
+                }
+                else if(token == "SPACE") {
+                    resultado.push_back("0");
+                } 
             }
+
         }
     }
     return resultado;
@@ -310,7 +358,8 @@ int main(int argc, char *argv[]){
 
             primeira_passagem(entrada);
             vector<string> codigo_objeto = segunda_passagem(entrada);
-            cout << "FIM" << endl;
+            for(auto a: codigo_objeto) cout << a << " ";
+            cout << endl;
         }
 
     }
