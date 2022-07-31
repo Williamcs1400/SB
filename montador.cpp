@@ -59,6 +59,7 @@ vector<string> ler_arquivo(string caminho){
     return lines;
 }
 
+// duvide str de acordo com os espacos e retorna um vector
 vector<string> split_string(string str) {
     vector<string> resultado;
     
@@ -67,6 +68,12 @@ vector<string> split_string(string str) {
 
     while(ss >> token) resultado.push_back(token);
     return resultado;
+}
+
+// retorna true se str contem parte
+bool contains (string str, string parte) {
+    if(str.find(parte) != string::npos) return true;
+    return false;
 }
 
 // faz preprocessamento do arquivo -> diretivas EQU e IF e remove comentarios
@@ -195,8 +202,12 @@ void primeira_passagem (vector<string> linhas) {
 
     for(string linha: linhas) {
 
+        if(contains(linha, "SECAO")) {
+            continue;
+        }
+
         for(string token: split_string(linha)) {
-            
+
             if(tokens_a_pular) {
                 tokens_a_pular--;
                 continue;
@@ -237,17 +248,11 @@ void primeira_passagem (vector<string> linhas) {
 
             // se não é diretiva nem instrução
             else {
+                cout << token << endl;
                 cout << "Erro semântico - Label/Operação não identificada" << endl;
             }
         }
     }
-}
-
-
-// retorna true se str contem parte
-bool contains (string str, string parte) {
-    if(str.find(parte) != string::npos) return true;
-    return false;
 }
 
 vector<string> segunda_passagem (vector<string> linhas) {
