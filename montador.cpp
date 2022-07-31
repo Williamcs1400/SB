@@ -200,10 +200,28 @@ void primeira_passagem (vector<string> linhas) {
     posicao = 0;
     int tokens_a_pular = 0;
 
+    //variaveris para verificacao de erros
+    bool contem_begin = false;
+    bool contem_end = false;
+    bool contem_public_or_extern = false;
+
     for(string linha: linhas) {
 
         if(contains(linha, "SECAO")) {
             continue;
+        }
+
+        //se contem BEGIN, deve conter END
+        if(contains(linha, "BEGIN")) {
+            contem_begin = true;
+        }
+
+        if(contains(linha, "END")) {
+            contem_end = true;
+        }
+
+        if(contains(linha, "EXTERN") || contains(linha, "PUBLIC")) {
+            contem_public_or_extern = true;
         }
 
         for(string token: split_string(linha)) {
@@ -253,14 +271,24 @@ void primeira_passagem (vector<string> linhas) {
             }
         }
     }
+
+    // verficação de erros
+    if((contem_begin && !contem_end) || (!contem_begin && contem_end)) {
+        cout << "Erro semântico - Falta BEGIN ou Falta END" << endl;
+    }
+
+    if(contem_public_or_extern && (!contem_begin || !contem_end)) {
+        cout << "Erro semântico - PUBLIC ou EXTERN definido mas falta a definição de BEGIN e END" << endl;
+    }
+
 }
 
 vector<string> segunda_passagem (vector<string> linhas) {
     vector<string> resultado;
     posicao = 0;
 
-    bool secao_texto_encontrada = false;
-    bool secao_dados_encontrada = false;
+    bool esta_na_secao_texto = false;
+    bool esta_na_secao_dados = false;
 
     int argumentos_esperados = 0;
 
@@ -272,8 +300,15 @@ vector<string> segunda_passagem (vector<string> linhas) {
 
     for(string linha: linhas) {
 
-        if(contains(linha, "SECAO TEXTO")) secao_texto_encontrada = true;
-        if(contains(linha, "SECAO DADOS")) secao_dados_encontrada = true;
+        //verificar em qual secao estamos para poder identificar erros
+        if(contains(linha, "SECAO TEXTO")){
+            esta_na_secao_texto = true;
+            esta_na_secao_dados = false;
+        }
+        if(contains(linha, "SECAO DADOS")){ 
+            esta_na_secao_dados = true;
+            esta_na_secao_texto = false;
+        }
 
         for(string token: split_string(linha)) {
 
@@ -309,6 +344,12 @@ vector<string> segunda_passagem (vector<string> linhas) {
             // se for uma instrucao
             else if(INSTRUCOES.count(token)) {
 
+                //verificar se estamos na secao certa
+                if(!esta_na_secao_texto) {
+                    cout << "Erro semântico - Instrução " << token << " fora da secao texto" << endl;
+                    exit(1);
+                }
+
                 if(token == "COPY") {
                     ultimo_copy = true;
                 }
@@ -323,10 +364,22 @@ vector<string> segunda_passagem (vector<string> linhas) {
                 posicao+=DIRETIVAS[token];
 
                 if(token == "CONST") {
+                    // verifica se estamos na secao certa
+                    if(!esta_na_secao_dados){
+                        cout << "Erro semântico - Diretiva " << token << " fora da secao de dados" << endl;
+                        exit(1);
+                    }
+
                     ultimo_const = true;
                     argumentos_esperados = 1;
                 }
                 else if(token == "SPACE") {
+                    // verifica se estamos na secao certa
+                    if(!esta_na_secao_dados){
+                        cout << "Erro semântico - Diretiva " << token << " fora da secao de dados" << endl;
+                        exit(1);
+                    }
+
                     resultado.push_back("0");
                 } 
             }
