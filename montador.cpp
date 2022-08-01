@@ -205,6 +205,8 @@ void primeira_passagem (vector<string> linhas) {
     bool contem_end = false;
     bool contem_public_or_extern = false;
 
+    string token_anterior = "";
+
     for(string linha: linhas) {
 
         if(contains(linha, "SECAO")) {
@@ -266,9 +268,18 @@ void primeira_passagem (vector<string> linhas) {
 
             // se não é diretiva nem instrução
             else {
-                cout << token << endl;
-                cout << "Erro semântico - Label/Operação não identificada" << endl;
+
+                //verificar se há um problema no número de argumentos
+                if((INSTRUCOES.count(token_anterior) && !INSTRUCOES.count(token)) || (DIRETIVAS.count(token_anterior) && !DIRETIVAS.count(token))) {
+                    cout << "Número de operandos inválidos do token: " << token_anterior << endl;
+                }else{
+                    cout << token << endl;
+                    cout << "Erro semântico - Label/Operação não identificada" << endl;
+                }
             }
+
+            token_anterior = token;
+
         }
     }
 
