@@ -416,7 +416,7 @@ vector<string> segunda_passagem (vector<string> linhas) {
 
 int main(int argc, char *argv[]){
     if(argc < 4) {
-        cout << "Erro: Faltam argumentos" << endl;
+        cout << "Erro: Faltam argumentos deve ser da seguinte maneira: ./montador <modo de execução> <arquivo de entrada> <arquivo de saída>" << endl;
         return 0;
     }
 
