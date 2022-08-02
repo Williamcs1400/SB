@@ -21,6 +21,10 @@ map<string, int> EQUS;
 
 map<string, int> TABELA_SIMBOLOS;
 
+map<string, int> TABELA_DEFINICOES;
+
+vector<string> TABELA_USO;
+
 // inicializa as tabelas
 void inicializar() {
     // tabela de instrucoes
@@ -210,13 +214,14 @@ bool verificar_sessoes(vector<string> linhas){
 */
 
 int posicao;
+bool contem_begin = false;
+bool contem_end = false;
+
 void primeira_passagem (vector<string> linhas) {
     posicao = 0;
     int tokens_a_pular = 0;
 
     //variaveris para verificacao de erros
-    bool contem_begin = false;
-    bool contem_end = false;
     bool contem_public_or_extern = false;
 
     string token_anterior = "";
@@ -242,7 +247,15 @@ void primeira_passagem (vector<string> linhas) {
 
         for(string token: split_string(linha)) {
 
+            if(token_anterior == "PUBLIC") {
+                token_anterior = "";
+                // colocamos o valor -1, ja que vamos atualizar depois
+                TABELA_DEFINICOES[token] = -1;
+                continue;
+            }
+
             if(tokens_a_pular) {
+                token_anterior = "";
                 tokens_a_pular--;
                 continue;
             }
@@ -257,7 +270,6 @@ void primeira_passagem (vector<string> linhas) {
                 }
                 else {
                     TABELA_SIMBOLOS[label] = posicao;
-                    cout << label << " " << posicao << endl;
                 }
             }
 
@@ -269,13 +281,22 @@ void primeira_passagem (vector<string> linhas) {
 
             // encontramos uma diretiva
             else if(DIRETIVAS.count(token)) {
-                // se for space ou const, a posicao é
+                // se for space ou const, adicionamos 1 a posicao
                 if(token == "SPACE" || token == "CONST") {
                     posicao += DIRETIVAS[token];
                     
                     // se for CONST precisamos pular o proximo token (argumento)
                     if(token == "CONST") {
                         tokens_a_pular = 1;
+                    }
+                }
+                else if(token == "EXTERN") {
+                    // inserimos um zero absoulto (aqui representado por -1) como endereco da ultima label
+                    if(contains(token_anterior, ":")) {
+                        TABELA_SIMBOLOS[token_anterior.substr(0, token_anterior.size()-1)] = -1;
+                    }
+                    else {
+                        cout << "Erro!" << endl;
                     }
                 }
             }
@@ -306,6 +327,17 @@ void primeira_passagem (vector<string> linhas) {
         cout << "Erro semântico - PUBLIC ou EXTERN definido mas falta a definição de BEGIN e END" << endl;
     }
 
+    // criando a tabela de definições
+    for(auto it = TABELA_DEFINICOES.begin(); it != TABELA_DEFINICOES.end(); it++) {
+        string label = it->first;
+
+        if(TABELA_SIMBOLOS.count(label)) {
+            TABELA_DEFINICOES[label] = TABELA_SIMBOLOS[label];
+        }
+        else {
+            cout << "Erro!" << endl;
+        }
+    }
 }
 
 vector<string> segunda_passagem (vector<string> linhas) {
@@ -357,7 +389,17 @@ vector<string> segunda_passagem (vector<string> linhas) {
                     }
 
                     // o argumento é um símobolo conhecido
-                    if(TABELA_SIMBOLOS.count(token)) resultado.push_back(to_string(TABELA_SIMBOLOS[token]));
+                    if(TABELA_SIMBOLOS.count(token)) {
+
+                        // é um símbolo externo
+                        if(TABELA_SIMBOLOS[token] == -1) {
+                            resultado.push_back("0");
+                            stringstream ss;
+                            ss << token << " " << posicao-argumentos_esperados;
+                            TABELA_USO.push_back(ss.str());
+                        }
+                        else resultado.push_back(to_string(TABELA_SIMBOLOS[token]));
+                    }
 
                     // o argumento é desconhecido, então erro
                     else cout << "Erro" << endl;
@@ -412,6 +454,8 @@ vector<string> segunda_passagem (vector<string> linhas) {
         }
     }
     return resultado;
+
+    for(auto a:TABELA_USO) cout << a << endl;
 }
 
 int main(int argc, char *argv[]){
@@ -441,8 +485,27 @@ int main(int argc, char *argv[]){
 
             primeira_passagem(entrada);
             vector<string> codigo_objeto = segunda_passagem(entrada);
-            for(auto a: codigo_objeto) cout << a << " ";
-            cout << endl;
+
+            ofstream arquivo;
+            arquivo.open(arquivo_saida);
+
+            if(contem_begin && contem_end) {
+                
+                arquivo << "TABELA USO" << endl;
+                for(auto a: TABELA_USO) arquivo << a << endl;
+                arquivo << endl;
+
+                arquivo << "TABELA DEF" << endl;
+                for(auto it = TABELA_DEFINICOES.begin(); it != TABELA_DEFINICOES.end(); it++) arquivo << it->first << " " << it->second << endl;
+                arquivo << endl;
+                
+            }
+
+
+            for(auto a: codigo_objeto) arquivo << a << " ";
+            arquivo << endl;
+
+            arquivo.close();
         }
 
     }
