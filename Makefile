@@ -1,6 +1,6 @@
-ENTRADA=test/fat_mod_A.asm
-SAIDA=test/result.asm
-MODO=-p
+ENTRADA=test/teste_p.asm
+SAIDA=test/teste_p.obj
+MODO=-o
 
 main:
 	g++ -std=c++11 -Wall montador.cpp -o montador
