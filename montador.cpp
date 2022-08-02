@@ -95,6 +95,8 @@ vector<string> pre_processamento(vector<string> linhas){
     
     bool secao_texto_encontrado = false;
 
+    string temp = "";
+
     for(string linha: linhas) {
         
         // ha um comentario, entao removemos da string
@@ -122,16 +124,28 @@ vector<string> pre_processamento(vector<string> linhas){
 
         for (string token: tokens) {
             // encontramos uma label, e salvamos retirando o :
-            if(token.find(":") != string::npos) ultima_label = token.substr(0, token.size() - 1);
+            if(contains(token, ":") && !secao_texto_encontrado) {
+                ignorar_atual = true;
+                temp = linha;
+                ultima_label = token.substr(0, token.size() - 1);
+            }
             
-            else if(token == "EQU") {
-                //se encontramos um equ apos uma label, essa declaracao eh valida
-                if(ultima_label != "") equ_encontrado = true;
-                else ultima_label = "";
+            else if (ultima_label.size() && !equ_encontrado) {
+                if(token == "EQU") {
+                    equ_encontrado = true;
+                    ignorar_atual = true;
+                }
+                else {
+                    if(contains(linha, ultima_label)) ignorar_atual = true;
+                    resultado.push_back(temp);
+                    ultima_label = "";
+                    temp = "";
+                }
             }
             else if(equ_encontrado) {
                 EQUS[ultima_label] = stoi(token);
                 equ_encontrado = false;
+                ignorar_atual = true;
                 ultima_label = "";
             }
             
@@ -167,7 +181,7 @@ vector<string> pre_processamento(vector<string> linhas){
         }
         // antes da secao texto,  nao precisamos salvar as linhas
 
-        if(secao_texto_encontrado && !ignorar_atual) {
+        if(!ignorar_atual) {
             ignorar_atual = false;
             resultado.push_back(linha);
         }
