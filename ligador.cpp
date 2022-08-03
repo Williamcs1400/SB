@@ -90,24 +90,24 @@ void montar_tabelas(vector<string> linhas, int tabelaUsada){
 // busca e substitui o valor os valores ta tabela de definição e da tabela de uso
 void substituicao(){
     // buscar definição e substituir valor que está no código objeto no par
-    for(int i = 0; i < TABELA_DE_DEFINICAO_1.size(); i++){
+    for(unsigned int i = 0; i < TABELA_DE_DEFINICAO_1.size(); i++){
         int posicaoDefinicao = TABELA_DE_DEFINICAO_1[i].second;
         int valor = COD_OBJ_1[posicaoDefinicao];
         TABELA_DE_DEFINICAO_1[i].second = valor;
     }
 
-    for(int i = 0; i < TABELA_DE_DEFINICAO_2.size(); i++){
+    for(unsigned int i = 0; i < TABELA_DE_DEFINICAO_2.size(); i++){
         int posicaoDefinicao = TABELA_DE_DEFINICAO_2[i].second;
         int valor = COD_OBJ_2[posicaoDefinicao];
         TABELA_DE_DEFINICAO_2[i].second = valor;
     }
 
     // substituir valor do código objeto com base na tabela de uso
-    for(int i = 0; i < TABELA_DE_DEFINICAO_1.size(); i++){
+    for(unsigned int i = 0; i < TABELA_DE_DEFINICAO_1.size(); i++){
         string key = TABELA_DE_DEFINICAO_1[i].first;
         int valor = TABELA_DE_DEFINICAO_1[i].second;
         //pegar elemento da tabela de uso 2 que tem a key igual a key
-        for(int j = 0; j < TABELA_DE_USO_2.size(); j++){
+        for(unsigned int j = 0; j < TABELA_DE_USO_2.size(); j++){
             if(TABELA_DE_USO_2[j].first == key){
                 int posicao = TABELA_DE_USO_2[j].second;
                 COD_OBJ_1[posicao] = valor;
@@ -115,11 +115,11 @@ void substituicao(){
         }
     }
 
-    for(int i = 0; i < TABELA_DE_DEFINICAO_2.size(); i++){
+    for(unsigned int i = 0; i < TABELA_DE_DEFINICAO_2.size(); i++){
         string key = TABELA_DE_DEFINICAO_2[i].first;
         int valor = TABELA_DE_DEFINICAO_2[i].second;
         //pegar elemento da tabela de uso 2 que tem a key igual a key
-        for(int j = 0; j < TABELA_DE_USO_1.size(); j++){
+        for(unsigned int j = 0; j < TABELA_DE_USO_1.size(); j++){
             if(TABELA_DE_USO_1[j].first == key){
                 int posicao = TABELA_DE_USO_1[j].second;
                 COD_OBJ_2[posicao] = valor;

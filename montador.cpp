@@ -25,6 +25,8 @@ map<string, int> TABELA_DEFINICOES;
 
 vector<string> TABELA_USO;
 
+vector<int> RELOCACAO;
+
 // inicializa as tabelas
 void inicializar() {
     // tabela de instrucoes
@@ -381,7 +383,6 @@ vector<string> segunda_passagem (vector<string> linhas) {
                 }
 
                 else {
-                    
                     // se o ultimo foi um copy, precisamos remover a virgula do argumento atual
                     if(ultimo_copy) {
                         ultimo_copy = false;
@@ -390,6 +391,8 @@ vector<string> segunda_passagem (vector<string> linhas) {
 
                     // o argumento é um símobolo conhecido
                     if(TABELA_SIMBOLOS.count(token)) {
+
+                        RELOCACAO.push_back(posicao-argumentos_esperados);
 
                         // é um símbolo externo
                         if(TABELA_SIMBOLOS[token] == -1) {
@@ -498,6 +501,10 @@ int main(int argc, char *argv[]){
                 arquivo << "TABELA DEF" << endl;
                 for(auto it = TABELA_DEFINICOES.begin(); it != TABELA_DEFINICOES.end(); it++) arquivo << it->first << " " << it->second << endl;
                 arquivo << endl;
+
+                arquivo << "RELOCACAO" << endl;
+                for(auto a: RELOCACAO) arquivo << a << " ";
+                arquivo << endl << endl;
                 
             }
 
