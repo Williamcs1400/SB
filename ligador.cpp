@@ -13,12 +13,16 @@ using namespace std;
 // Para arquivo1
 vector<pair<string, int>> TABELA_DE_USO_1;
 vector<pair<string, int>> TABELA_DE_DEFINICAO_1;
+vector<int> RELOCACAO_1;
 vector<int> COD_OBJ_1;
+const int FATOR_1 = 0;
 
 // Para arquivo2
 vector<pair<string, int>> TABELA_DE_USO_2;
 vector<pair<string, int>> TABELA_DE_DEFINICAO_2;
+vector<int> RELOCACAO_2;
 vector<int> COD_OBJ_2;
+int FATOR_2 = 0;
 
 vector<string> ler_arquivo(string caminho){
     vector<string> lines;
@@ -28,13 +32,25 @@ vector<string> ler_arquivo(string caminho){
     return lines;
 }
 
+vector<string> split_string(string str) {
+    vector<string> resultado;
+    
+    string token;
+    stringstream ss(str);
+
+    while(ss >> token) resultado.push_back(token);
+    return resultado;
+}
+
 void montar_tabelas(vector<string> linhas, int tabelaUsada){
 
     vector<pair<string, int>> *tabelaDeUso = tabelaUsada == 1 ? &TABELA_DE_USO_1 : &TABELA_DE_USO_2;
     vector<pair<string, int>> *tabelaDeDefinicao = tabelaUsada == 1 ? &TABELA_DE_DEFINICAO_1 : &TABELA_DE_DEFINICAO_2;
+    vector<int> *relocacao = tabelaUsada == 1? &RELOCACAO_1 : &RELOCACAO_2;
     vector<int> *codObj = tabelaUsada == 1 ? &COD_OBJ_1 : &COD_OBJ_2;
     bool estamos_na_tabela_de_uso = false;
     bool estamos_na_tabela_de_definicao = false;
+    bool estamos_na_relocacao = false;
 
     string obj = "";
 
@@ -55,26 +71,46 @@ void montar_tabelas(vector<string> linhas, int tabelaUsada){
         else if(linha.find("TABELA USO") != string::npos){
             estamos_na_tabela_de_uso = true;
             estamos_na_tabela_de_definicao = false;
+            estamos_na_relocacao = false;
         }
 
         // Se estamos na tabela de definição
         else if(linha.find("TABELA DEF") != string::npos){
             estamos_na_tabela_de_uso = false;
             estamos_na_tabela_de_definicao = true;
+            estamos_na_relocacao = false;
+        }
+
+        else if(linha.find("RELOCACAO") != string::npos) {
+            estamos_na_tabela_de_definicao = false;
+            estamos_na_tabela_de_uso = false;
+            estamos_na_relocacao = true;
         }
 
         else if(estamos_na_tabela_de_uso){
-            string key = linha.substr(0, linha.find(" "));
-            string value = linha.substr(linha.find(" ") + 1);
-            (*tabelaDeUso).push_back(make_pair(key, stoi(value)));
+            vector<string> temp = split_string(linha);
+            if(temp.size() == 2){
+                (*tabelaDeUso).push_back(make_pair(temp[0], stoi(temp[1])));
+            }
         }
 
         else if(estamos_na_tabela_de_definicao){
-            string key = linha.substr(0, linha.find(" "));
-            string value = linha.substr(linha.find(" ") + 1);
-            // put <key, value> in the table
-            (*tabelaDeDefinicao).push_back(make_pair(key, stoi(value)));
+            vector<string> temp = split_string(linha);
+            if(temp.size() == 2){
+                (*tabelaDeDefinicao).push_back(make_pair(temp[0], stoi(temp[1])));
+            }
+        }  
+
+        else if(estamos_na_relocacao) {
+            vector<string> temp = split_string(linha);
+            if(temp.size()) {
+                for(auto a: temp) {
+                    (*relocacao).push_back(stoi(a));
+                }
+            }
+            estamos_na_relocacao = false;
         }
+
     }
 
     //transformar a obj em um vector de inteiros
@@ -89,18 +125,6 @@ void montar_tabelas(vector<string> linhas, int tabelaUsada){
 
 // busca e substitui o valor os valores ta tabela de definição e da tabela de uso
 void substituicao(){
-    // buscar definição e substituir valor que está no código objeto no par
-    for(unsigned int i = 0; i < TABELA_DE_DEFINICAO_1.size(); i++){
-        int posicaoDefinicao = TABELA_DE_DEFINICAO_1[i].second;
-        int valor = COD_OBJ_1[posicaoDefinicao];
-        TABELA_DE_DEFINICAO_1[i].second = valor;
-    }
-
-    for(unsigned int i = 0; i < TABELA_DE_DEFINICAO_2.size(); i++){
-        int posicaoDefinicao = TABELA_DE_DEFINICAO_2[i].second;
-        int valor = COD_OBJ_2[posicaoDefinicao];
-        TABELA_DE_DEFINICAO_2[i].second = valor;
-    }
 
     // substituir valor do código objeto com base na tabela de uso
     for(unsigned int i = 0; i < TABELA_DE_DEFINICAO_1.size(); i++){
@@ -110,7 +134,7 @@ void substituicao(){
         for(unsigned int j = 0; j < TABELA_DE_USO_2.size(); j++){
             if(TABELA_DE_USO_2[j].first == key){
                 int posicao = TABELA_DE_USO_2[j].second;
-                COD_OBJ_1[posicao] = valor;
+                COD_OBJ_2[posicao] = valor;
             }
         }
     }
@@ -122,7 +146,7 @@ void substituicao(){
         for(unsigned int j = 0; j < TABELA_DE_USO_1.size(); j++){
             if(TABELA_DE_USO_1[j].first == key){
                 int posicao = TABELA_DE_USO_1[j].second;
-                COD_OBJ_2[posicao] = valor;
+                COD_OBJ_1[posicao] = valor;
             }
         }
     }
@@ -130,8 +154,21 @@ void substituicao(){
 
 int main(int argc, char *argv[]){
     
-    if(argc != 3){
-        cout << "Usage: ./ligador <arquivo1.o> <arquivo2.o>" << endl;
+    if(argc < 2){
+        cout << "Usage: ./ligador <arquivo1.o> <arquivo2.o> ou ./ligador <arquivoUnico.o>" << endl;
+        return 0;
+    }
+
+    // se for um arquivo unico, nao precisamos de tabelas de uso e definição
+    if(argc == 2){
+        vector<string> arquivo_unico = ler_arquivo(argv[1]);
+        montar_tabelas(arquivo_unico, 1);
+        ofstream saida;
+        saida.open("test/resultFinal.obj");
+        for(int i : COD_OBJ_1){
+            saida << i << " ";
+        } 
+        saida.close();
         return 0;
     }
 
@@ -147,29 +184,23 @@ int main(int argc, char *argv[]){
     montar_tabelas(arquivo1, 1);
     montar_tabelas(arquivo2, 2);
 
-    cout << "Codigo objeto 1 antes de substituir: " << endl;
-    for(int i : COD_OBJ_1){
-        cout << i << " ";
+    FATOR_2 = COD_OBJ_1.size();
+
+    // corrigindo a tabela de uso do segundo arquivo
+
+    for(unsigned int i=0; i<TABELA_DE_DEFINICAO_2.size(); i++){
+        TABELA_DE_DEFINICAO_2[i].second += FATOR_2;
     }
-    cout << endl;
-    cout << "Codigo objeto 2 antes de substituir: " << endl;
-    for(int i : COD_OBJ_2){
-        cout << i << " ";
+
+    // como os arquivos sao tratados separadamente, nao precisamos
+    // corrigir a tabela de uso do segundo arquivo 
+
+    // corrigindo os enderecos relativos
+    for(int i: RELOCACAO_2) {
+        COD_OBJ_2[i] += FATOR_2;
     }
-    cout << endl << endl;
 
     substituicao();
-
-    cout << "Codigo objeto 1 depois de substituir: " << endl;
-    for(int i : COD_OBJ_1){
-        cout << i << " ";
-    }
-    cout << endl;
-    cout << "Codigo objeto 2 depois de substituir: " << endl;
-    for(int i : COD_OBJ_2){
-        cout << i << " ";
-    }
-    cout << endl << endl;
 
     //salvar codigo objeto 1 e 2 concatenado em um arquivo
     ofstream saida;
