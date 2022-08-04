@@ -2,7 +2,7 @@
 
 ### Autores:
 
-João Pedro Coutinho Assunção - 18/0019813
+João Pedro Assunção Coutinho - 18/0019813
 
 William Coelho da Silva - 18/0029274
 
