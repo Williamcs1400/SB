@@ -25,3 +25,5 @@ Similarmente, para rodar o ligador, basta usar **make ligar**.
 ### Observações:
 
 Adicionamos informações de realocação do tipo lista de endereços, nos arquivos objeto com begin e end.
+
+Os arquivos que usamos para testes estão na pasta **test**.
